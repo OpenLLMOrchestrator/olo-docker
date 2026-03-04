@@ -1,26 +1,32 @@
 services:
   redis:
-    image: redis:7-alpine
+    image: redis:latest
     container_name: olo-redis
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - olo-dev-redis-data:/data
+      - olo-redis-data:/data
     networks:
       - olo-net
 
   redisinsight:
-    image: redis/redisinsight:latest
+    image: redislabs/redisinsight:latest
     container_name: olo-redisinsight
     restart: unless-stopped
     ports:
       - "5540:5540"
+    environment:
+      - RI_PRE_SETUP_DATABASES_PATH=/db/import-data/connections.json
+      # Optional: Auto-accept terms to skip initial setup screen
+      - RI_ACCEPT_TERMS_AND_CONDITIONS=true
+    volumes:
+      # persist connections and optionally preload them
+      - olo-redisinsight_data:/db
+      - ./configuration/redisinsight/connections.json:/db/import-data/connections.json
     depends_on:
       - redis
-    environment:
-      - RI_APP_PORT=5540
+     
     networks:
       - olo-net
 
@@ -30,4 +36,5 @@ networks:
     name: olo-net
 
 volumes:
-  olo-dev-redis-data:
+  olo-redis-data:
+  olo-redisinsight_data:

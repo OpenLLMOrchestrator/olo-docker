@@ -7,12 +7,19 @@ if ! docker network inspect olo-net >/dev/null 2>&1; then
   docker network create olo-net
 fi
 
-echo "Bringing up full OLO dev stack (project: olo, in sequence: db, cache, elastic, temporal, olo, ai-text, ai-image, ai-video, ai-audio)..."
+echo "Pulling latest OLO images (olo, olo-worker, olo-ui, olo-chat)..."
+docker pull openllmorchestrator/olo:latest
+docker pull openllmorchestrator/olo-worker:latest
+docker pull openllmorchestrator/olo-ui:latest
+docker pull openllmorchestrator/olo-chat:latest
+
+echo "Bringing up full OLO dev stack (project: olo, in sequence: db, cache, elastic, vectordb, temporal, olo, ai-text, ai-image, ai-video, ai-audio)..."
 
 docker compose -p olo \
   -f docker-compose-db.yml \
   -f docker-compose-cache.yml \
   -f docker-compose-ElasticSearch.yml \
+  -f docker-compose-vectordb.yml \
   -f docker-compose-temporal.yml \
   -f docker-compose-olo.yml \
   -f docker-compose-ai-text.yml \

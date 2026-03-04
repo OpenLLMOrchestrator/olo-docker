@@ -1,6 +1,6 @@
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.3
     container_name: olo-elasticsearch
     environment:
       - discovery.type=single-node
@@ -10,19 +10,26 @@ services:
       - "9200:9200"
       - "9300:9300"
     volumes:
-      - olo-dev-es-data:/usr/share/elasticsearch/data
+      - olo-es-data:/usr/share/elasticsearch/data
     networks:
       - olo-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.3
+    image: docker.elastic.co/kibana/kibana:8.17.3
     container_name: olo-kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     networks:
       - olo-net
 
@@ -32,4 +39,4 @@ networks:
     name: olo-net
 
 volumes:
-  olo-dev-es-data:
+  olo-es-data:

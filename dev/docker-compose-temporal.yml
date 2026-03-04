@@ -1,56 +1,55 @@
 services:
   temporal:
-    image: temporalio/auto-setup:1.24.2
     container_name: olo-temporal
+    image: temporalio/auto-setup:${TEMPORAL_VERSION:-1.22.4}
     environment:
-      - DB=postgresql
+      - DB=postgres12
       - DB_PORT=5432
-      - POSTGRES_USER=dev
-      - POSTGRES_PWD=dev
-      - POSTGRES_DB=temporal
-      - SQL_USERNAME=dev
-      - SQL_PASSWORD=dev
-      - SQL_DATABASE=temporal
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=pgpass
+      - POSTGRES_SEEDS=db
+      - DYNAMIC_CONFIG_FILE_PATH=/etc/temporal/config/dynamicconfig/development-sql.yaml
+      - ENABLE_ES=true
+      - ES_SEEDS=elasticsearch
+      - ES_VERSION=v7
     ports:
+      - "8001:8000"
       - "7233:7233"
-    depends_on:
-      - temporal-postgres
-    networks:
-      - olo-net
-
-  temporal-postgres:
-    image: postgres:16-alpine
-    container_name: olo-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=dev
-      - POSTGRES_PASSWORD=dev
-      - POSTGRES_DB=temporal
-    ports:
-      - "5444:5432"
     volumes:
-      - olo-dev-temporal-db-data:/var/lib/postgresql/data
+      - ./configuration/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
     networks:
       - olo-net
+    restart: unless-stopped
 
-  temporal-ui:
-    image: temporalio/ui:2.27.2
-    container_name: olo-temporal-ui
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000,http://localhost:8080
-    ports:
-      - "8080:8080"
+  temporal-admin-tools:
+    container_name: olo-temporal-admin-tools
+    image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION:-1.22.4}
     depends_on:
       - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+    stdin_open: true
+    tty: true
     networks:
       - olo-net
+    restart: unless-stopped
+
+  temporal-ui:
+    container_name: olo-temporal-ui
+    image: temporalio/ui:${TEMPORAL_UI_VERSION:-2.47.2}
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8092:8080"
+    networks:
+      - olo-net
+    restart: unless-stopped
 
 networks:
   olo-net:
     external: true
     name: olo-net
-
-volumes:
-  olo-dev-temporal-db-data:

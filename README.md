@@ -14,6 +14,8 @@ This repository provides Docker Compose setups to bring up the OLO stack in thre
 - [Production Setup (.env)](#production-setup-env)
 - [Manual Docker Compose Commands](#manual-docker-compose-commands)
 - [Ports and Services](#ports-and-services)
+- [Dev stack — Web UIs and URLs](#dev-stack--web-uis-and-urls)
+- [Dev stack — Internal hostnames and URLs (worker/config)](#dev-stack--internal-hostnames-and-urls-workerconfig)
 - [Stopping the Stack](#stopping-the-stack)
 - [Customization](#customization)
 - [Troubleshooting](#troubleshooting)
@@ -235,6 +237,68 @@ docker compose -f demo/docker-compose.yml up -d
 - Only one of dev/demo should use the app port 3000 at a time if you run them on the same machine (or change the host port in the corresponding `docker-compose.yml`).
 - Dev and demo use different DB host ports (5432 vs 5433) so they can run simultaneously.
 - Prod does not publish the database port; the app connects via the internal Docker network.
+
+---
+
+## Dev stack — Web UIs and URLs
+
+When you bring up the **full dev stack** from `dev/` (e.g. `install.bat dev` or `./install.sh dev`), these web UIs and APIs are available on the host:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Qdrant** | http://localhost:6333/dashboard | Vector DB UI (e.g. http://localhost:6333/dashboard#/welcome) |
+| **Temporal UI** | http://localhost:8092 | Workflow UI |
+| **pgAdmin** | http://localhost:8081 | PostgreSQL admin (default login from `database.env`, e.g. admin@admin.com / admin) |
+| **Kibana** | http://localhost:5601 | Elasticsearch UI |
+| **Redis Insight** | http://localhost:5540 | Redis UI |
+| **Elasticsearch** | http://localhost:9200 | Elasticsearch REST API |
+| **App** | http://localhost:3000 | Dev app (when run with `--profile app`) |
+| **AI Text (LocalAI)** | http://localhost:8090 | OpenAI-compatible API (text) |
+| **AI Text (Ollama)** | http://localhost:11434 | Ollama API |
+| **AI Audio (LocalAI)** | http://localhost:8082 | TTS/STT API |
+| **Stable Diffusion** | http://localhost:7860 | Image generation UI |
+| **InvokeAI** | http://localhost:9090 | Image generation UI |
+| **ComfyUI (image)** | http://localhost:8188 | ComfyUI image workflows |
+| **ComfyUI (video)** | http://localhost:8189 | ComfyUI video workflows |
+
+- **Redis** is available at `localhost:6379` (no web UI; use Redis Insight above).
+- **PostgreSQL** is at `localhost:5432` (use pgAdmin or any client; credentials from `dev/configuration/envirinment/database.env`).
+
+---
+
+## Dev stack — Internal hostnames and URLs (worker/config)
+
+Use these **internal** hostnames and URLs when configuring services that run inside the same Docker network (e.g. **olo-worker**, olo API, or custom containers). On `olo-net`, containers resolve each other by **service name** (Compose service key), not by container name.
+
+| Container name           | Service name (hostname) | Internal URL / endpoint        | Use in config (e.g. worker)      |
+|--------------------------|-------------------------|---------------------------------|-----------------------------------|
+| olo-api                  | **olo**                 | http://olo:7080                 | OLO API base URL, callbacks       |
+| olo-worker               | olo-worker              | —                               | Consumer (uses others below)      |
+| olo-ui                   | olo-ui                  | http://olo-ui:80                | UI (if another service links)     |
+| olo-chat                 | olo-chat                | http://olo-chat:80              | Chat UI (e.g. VITE_API_BASE)     |
+| olo-redis                | **redis**               | redis:6379                      | OLO_CACHE_HOST, OLO_CACHE_PORT    |
+| olo-db                   | **db**                  | db:5432                         | OLO_DB_HOST, POSTGRES_SEEDS       |
+| olo-elasticsearch        | **elasticsearch**       | http://elasticsearch:9200       | ES_SEEDS, Kibana backend          |
+| olo-kibana               | kibana                  | http://kibana:5601              | —                                 |
+| olo-temporal             | **temporal**            | temporal:7233                   | TEMPORAL_HOST, OLO_TEMPORAL_TARGET |
+| olo-temporal-ui          | temporal-ui             | http://temporal-ui:8080         | —                                 |
+| olo-qdrant               | **qdrant**              | http://qdrant:6333              | QDRANT_BASE_URL                   |
+| olo-openai-oss           | openai-oss              | http://openai-oss:8080          | OpenAI-compatible text (host 8090)|
+| olo-ollama               | **ollama**              | http://ollama:11434             | OLLAMA_BASE_URL                   |
+| olo-stable-diffusion      | stable-diffusion         | http://stable-diffusion:7860    | Image generation                  |
+| olo-invokeai             | invokeai                | http://invokeai:9090            | Image generation                  |
+| olo-comfyui              | comfyui                 | http://comfyui:8188             | ComfyUI image (host 8188)         |
+| olo-comfyui-video        | comfyui                 | http://comfyui:8188             | ComfyUI video (host 8189)         |
+| olo-openai-oss-audio     | openai-oss              | http://openai-oss:8080          | LocalAI audio (host 8082)         |
+| olo-ollama-audio         | ollama                  | http://ollama:11434             | Ollama audio                      |
+| olo-pgadmin              | pgadmin                 | http://pgadmin:80               | —                                 |
+| olo-redisinsight         | redisinsight            | http://redisinsight:5540        | —                                 |
+
+**Notes:**
+
+- **Bold** service names are the ones commonly referenced in worker/API env (e.g. `OLO_CACHE_HOST=redis`, `OLO_TEMPORAL_TARGET=temporal:7233`, `OLO_DB_HOST=db`, `OLLAMA_BASE_URL=http://ollama:11434`, `QDRANT_BASE_URL=http://qdrant:6333`, `VITE_API_BASE=http://olo:7080` for chat).
+- When multiple compose files define the same service name (e.g. **ollama**, **openai-oss**, **comfyui**), the last-loaded file wins; use the hostname for the instance you need (e.g. text vs audio).
+- Pipeline config (Temporal target) should use `temporal:7233`; Redis key prefix and tenant IDs are unchanged.
 
 ---
 
