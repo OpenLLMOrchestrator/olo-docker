@@ -1,0 +1,40 @@
+services:
+  olo:
+    image: openllmorchestrator/olo:latest
+    container_name: olo-api
+    restart: unless-stopped
+    networks:
+      - olo-net
+
+  olo-worker:
+    image: openllmorchestrator/olo-worker:latest
+    container_name: olo-worker
+    restart: unless-stopped
+    depends_on:
+      - olo
+    networks:
+      - olo-net
+
+  olo-ui:
+    image: openllmorchestrator/olo-ui:latest
+    container_name: olo-ui
+    restart: unless-stopped
+    depends_on:
+      - olo
+    networks:
+      - olo-net
+
+  olo-chat:
+    image: openllmorchestrator/olo-chat:latest
+    container_name: olo-chat
+    restart: unless-stopped
+    depends_on:
+      - olo
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net
+

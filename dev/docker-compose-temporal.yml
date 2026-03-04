@@ -1,0 +1,56 @@
+services:
+  temporal:
+    image: temporalio/auto-setup:1.24.2
+    container_name: olo-temporal
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=dev
+      - POSTGRES_PWD=dev
+      - POSTGRES_DB=temporal
+      - SQL_USERNAME=dev
+      - SQL_PASSWORD=dev
+      - SQL_DATABASE=temporal
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development.yaml
+    ports:
+      - "7233:7233"
+    depends_on:
+      - temporal-postgres
+    networks:
+      - olo-net
+
+  temporal-postgres:
+    image: postgres:16-alpine
+    container_name: olo-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=temporal
+    ports:
+      - "5444:5432"
+    volumes:
+      - olo-dev-temporal-db-data:/var/lib/postgresql/data
+    networks:
+      - olo-net
+
+  temporal-ui:
+    image: temporalio/ui:2.27.2
+    container_name: olo-temporal-ui
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temporal
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net
+
+volumes:
+  olo-dev-temporal-db-data:

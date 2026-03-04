@@ -1,0 +1,38 @@
+# Dev AI stack - text: OpenAI-compatible API (LocalAI) + Ollama
+services:
+  openai-oss:
+    image: localai/localai:latest-cpu
+    container_name: olo-openai-oss
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      - THREADS=4
+      - CONTEXT_SIZE=4096
+      - DEBUG=true
+    volumes:
+      - olo-dev-localai-models:/models
+      - olo-dev-localai-cache:/cache
+    networks:
+      - olo-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: olo-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - olo-dev-ollama-data:/root/.ollama
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net
+
+volumes:
+  olo-dev-localai-models:
+  olo-dev-localai-cache:
+  olo-dev-ollama-data:

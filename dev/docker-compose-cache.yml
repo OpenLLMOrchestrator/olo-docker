@@ -1,0 +1,33 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: olo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - olo-dev-redis-data:/data
+    networks:
+      - olo-net
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: olo-redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    environment:
+      - RI_APP_PORT=5540
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net
+
+volumes:
+  olo-dev-redis-data:

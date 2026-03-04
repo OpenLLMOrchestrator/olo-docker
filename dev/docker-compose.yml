@@ -1,0 +1,44 @@
+# Development stack - hot reload, debug, local volumes
+# Default: db only. Add --profile app when you have your-app:latest (e.g. docker compose --profile app up -d)
+services:
+  app:
+    image: your-app:latest
+    container_name: olo-app
+    restart: unless-stopped
+    profiles:
+      - app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=debug
+    volumes:
+      - ../src:/app/src
+    depends_on:
+      - db
+    networks:
+      - olo-net
+
+  db:
+    image: postgres:16-alpine
+    container_name: olo-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=olo_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - olo-dev-db-data:/var/lib/postgresql/data
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net
+
+volumes:
+  olo-dev-db-data:
