@@ -1,23 +1,23 @@
 # Dev AI stack - image: Stable Diffusion WebUI, InvokeAI, ComfyUI
+# Uses all NVIDIA GPUs. Requires nvidia-container-toolkit.
 services:
   stable-diffusion:
-    image: ghcr.io/ai-dock/stable-diffusion-webui:latest-cpu
+    image: ghcr.io/ai-dock/stable-diffusion-webui:latest-cuda
     container_name: olo-stable-diffusion
     restart: unless-stopped
     ports:
       - "7860:7860"
     environment:
-      - CLI_ARGS=--allow-code --medvram
+      - CLI_ARGS=--allow-code
     volumes:
       - olo-dev-sd-data:/data
-    # Uncomment for NVIDIA GPU
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - olo-net
 
@@ -31,19 +31,18 @@ services:
       - INVOKEAI_ROOT=/invokeai
     volumes:
       - olo-dev-invokeai-data:/invokeai
-    # Uncomment for NVIDIA GPU
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - olo-net
 
   comfyui:
-    image: ghcr.io/ai-dock/comfyui:latest
+    image: ghcr.io/ai-dock/comfyui:latest-cuda
     container_name: olo-comfyui
     restart: unless-stopped
     ports:
@@ -54,14 +53,13 @@ services:
       - olo-dev-comfyui-models:/opt/ComfyUI/models
       - olo-dev-comfyui-output:/opt/ComfyUI/output
       - olo-dev-comfyui-input:/opt/ComfyUI/input
-    # Uncomment for NVIDIA GPU
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - olo-net
 

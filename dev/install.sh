@@ -29,3 +29,13 @@ docker compose -p olo \
   up -d
 
 echo "Dev OLO stack is up (project: olo)."
+
+echo "Waiting for Ollama, then pulling models (llama3.2, mistral, phi3, etc.)..."
+sleep 5
+"$(dirname "$0")/scripts/ollama-pull-models.sh" || true
+
+echo "Waiting for LocalAI (openai-oss), then installing models..."
+sleep 5
+"$(dirname "$0")/scripts/openai-oss-pull-models.sh" || true
+
+echo "Done."

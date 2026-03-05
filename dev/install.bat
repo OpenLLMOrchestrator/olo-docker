@@ -29,3 +29,13 @@ docker compose -p olo ^
   up -d
 
 echo Dev OLO stack is up (project: olo).
+
+echo Waiting for Ollama, then pulling models (llama3.2, mistral, phi3, etc.)...
+timeout /t 5 /nobreak >nul
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\ollama-pull-models.ps1"
+
+echo Waiting for LocalAI (openai-oss), then installing models...
+timeout /t 5 /nobreak >nul
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\openai-oss-pull-models.ps1"
+
+echo Done.

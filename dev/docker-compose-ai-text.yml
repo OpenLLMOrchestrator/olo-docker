@@ -1,7 +1,8 @@
 # Dev AI stack - text: OpenAI-compatible API (LocalAI) + Ollama
+# Uses all NVIDIA GPUs (deploy.resources.reservations.devices). Requires nvidia-container-toolkit.
 services:
   openai-oss:
-    image: localai/localai:latest-cpu
+    image: localai/localai:latest-gpu-nvidia-cuda-12
     container_name: olo-openai-oss
     restart: unless-stopped
     ports:
@@ -13,6 +14,13 @@ services:
     volumes:
       - olo-dev-localai-models:/models
       - olo-dev-localai-cache:/cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - olo-net
 
@@ -24,6 +32,13 @@ services:
       - "11434:11434"
     volumes:
       - olo-dev-ollama-data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     networks:
       - olo-net
 
